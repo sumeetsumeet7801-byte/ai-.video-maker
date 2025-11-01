@@ -12,38 +12,37 @@
       background: linear-gradient(135deg, var(--bg1), var(--bg2));
       color: var(--text);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-      padding: 40px 20px; margin: 0; overflow-x: hidden;
+      display:flex; flex-direction:column; align-items:center; min-height:100vh;
+      padding:40px 20px; margin:0; overflow-x:hidden;
     }
-    h1{ margin-bottom: 12px; text-shadow: 0 2px 8px rgba(56,189,248,.7); }
+    h1{ margin-bottom:12px; text-shadow:0 2px 8px rgba(56,189,248,.7) }
     .row{display:grid;gap:10px;grid-template-columns:1fr 1fr;max-width:700px;width:80%}
     @media (max-width:680px){ .row{grid-template-columns:1fr} }
-    textarea,select,button{
-      width:80%; max-width:700px;
-    }
+    textarea,select,button{ width:80%; max-width:700px }
     textarea{
       height:140px; padding:15px; border-radius:12px; border:none; outline:none;
       font-size:18px; resize:vertical; background:#1e293b; color:var(--text);
-      box-shadow:0 4px 15px rgba(56,189,248,.4); transition: box-shadow .3s;
+      box-shadow:0 4px 15px rgba(56,189,248,.4); transition:box-shadow .3s;
     }
-    textarea:focus{ box-shadow:0 0 15px 4px var(--accent); }
+    textarea:focus{ box-shadow:0 0 15px 4px var(--accent) }
     select{
-      width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--ring); background:#0b1220; color:var(--text);
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--ring);
+      background:#0b1220; color:var(--text);
     }
+    .stack{display:flex;gap:10px;flex-wrap:wrap;max-width:700px;width:80%}
     button{
       margin-top:12px; padding:12px 30px; font-size:18px; color:#001018;
       background:linear-gradient(90deg,var(--accent),var(--accent2)); border:none; border-radius:14px; cursor:pointer; font-weight:700;
       box-shadow:0 8px 25px rgba(56,189,248,.6); transition:transform .1s, filter .2s;
     }
     .ghost{background:transparent;color:var(--text);border:1px solid var(--ring)}
-    button:active{ transform:scale(.98); }
-    button:disabled{opacity:.6;cursor:not-allowed;filter:grayscale(.2)}
-    .stack{display:flex;gap:10px;flex-wrap:wrap;max-width:700px;width:80%}
+    button:active{ transform:scale(.98) }
+    button:disabled{ opacity:.6; cursor:not-allowed; filter:grayscale(.2) }
     video{
       margin-top:18px; max-width:80%; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.7);
       outline:2px solid var(--ring); background:#111827; display:none;
     }
-    .status{ margin-top:10px; font-size:16px; font-weight:600; min-height:24px; }
+    .status{ margin-top:10px; font-size:16px; font-weight:600; min-height:24px }
     .status.ok{ color:var(--ok) } .status.err{ color:var(--err) } .muted{color:#9aa3b2;font-size:.92rem}
     .download-btn{
       margin-top:12px; padding:10px 20px; font-size:16px; border:none; border-radius:12px; background:#f97316; color:#fff; display:none;
@@ -61,13 +60,14 @@
   <h1>🎥 AI Video Maker</h1>
 
   <textarea id="scriptInput" placeholder="ನಿಮ್ಮ ವೀಡಿಯೋ ಸ್ಕ್ರಿಪ್ಟ್ ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ…"></textarea>
+
   <div class="row" style="margin-top:10px">
-    <select id="aspect">
+    <select id="aspect" aria-label="Aspect Ratio">
       <option value="16:9">16:9 (YouTube)</option>
       <option value="9:16">9:16 (Reels/Shorts)</option>
       <option value="1:1">1:1 (Square)</option>
     </select>
-    <select id="style">
+    <select id="style" aria-label="Visual Style">
       <option value="cinematic">Cinematic</option>
       <option value="documentary">Documentary</option>
       <option value="anime">Anime</option>
@@ -80,16 +80,19 @@
     <button class="ghost" id="clearBtn" type="button">Clear</button>
   </div>
 
-  <div class="status" id="status"></div>
-  <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <div class="bar-wrap" aria-hidden="true"><div class="bar" id="bar"></div></div>
 
   <video id="outputVideo" controls></video>
   <a id="downloadLink" class="download-btn" href="#" download>⬇️ Download Video</a>
   <div class="muted" style="max-width:700px;width:80%;margin-top:8px">ಟಿಪ್: 1–3 ವಾಕ್ಯಗಳ concise ಸ್ಕ್ರಿಪ್ಟ್ ಉತ್ತಮ ಫಲಿತಾಂಶ ಕೊಡುತ್ತದೆ.</div>
 
   <script>
-    const WORKER_URL = "https://ai-video-sumeet.workers.dev/generate"; // ನಿಮ್ಮ worker URL
+    /* ============ CONFIG ============ */
+    // 🔁 ನಿನ್ನ Worker ಬೇಸ್ URL ಮಾತ್ರ ಇಲ್ಲಿ ಸೆಟ್ ಮಾಡು (TRAILING / ಬೇಡ)
+    const WORKER_BASE = "https://sparkling-term-78f6.sumeetsumeet7801.workers.dev";
 
+    /* ============ ELEMENTS ============ */
     const ta = document.getElementById("scriptInput");
     const btn = document.getElementById("generateBtn");
     const statusEl = document.getElementById("status");
@@ -97,106 +100,110 @@
     const downloadLink = document.getElementById("downloadLink");
     const bar = document.getElementById("bar");
 
-    // restore last script
-    ta.value = localStorage.getItem("last-script") || "";
+    /* ============ HELPERS ============ */
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    function setStatus(msg, type) {
+      statusEl.className = "status" + (type ? (" " + type) : "");
+      statusEl.innerHTML = msg;
+    }
+    function lockUI(lock) {
+      btn.disabled = lock;
+      btn.innerText = lock ? "ಜನರೇಟ್ ಆಗುತ್ತಿದೆ…" : "✨ Generate Video";
+    }
+    let progTimer = null;
+    function startProgress() {
+      bar.style.width = "5%";
+      clearInterval(progTimer);
+      progTimer = setInterval(() => {
+        const cur = parseFloat(bar.style.width) || 5;
+        bar.style.width = Math.min(cur + (Math.random() * 10 + 4), 92) + "%";
+      }, 600);
+    }
+    function stopProgress(full=true) {
+      clearInterval(progTimer);
+      bar.style.width = full ? "100%" : "0%";
+      if (full) setTimeout(() => bar.style.width = "0%", 900);
+    }
 
-    // sample / clear
+    /* ============ UX: Sample/Clear/Shortcut ============ */
+    ta.value = localStorage.getItem("last-script") || "";
     document.getElementById("sampleBtn").onclick = () => {
       ta.value = "Golden-hour aerial over green paddy fields in Karnataka, gentle drone forward, soft mist, cinematic grade.";
       ta.focus();
     };
     document.getElementById("clearBtn").onclick = () => {
-      ta.value = ""; statusEl.textContent = ""; bar.style.width = "0%";
-      videoEl.style.display="none"; downloadLink.style.display="none"; videoEl.src = "";
+      ta.value = ""; setStatus(""); stopProgress(false);
+      videoEl.src = ""; videoEl.style.display="none"; downloadLink.style.display="none";
     };
-
-    // keyboard shortcut
     document.addEventListener("keydown", (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generateVideo();
     });
-
-    let progTimer=null;
-    function startProgress(){
-      bar.style.width="5%";
-      progTimer=setInterval(()=>{
-        const cur=parseFloat(bar.style.width)||0;
-        bar.style.width=Math.min(cur+Math.random()*12,92)+"%";
-      },600);
-    }
-    function stopProgress(full=true){
-      clearInterval(progTimer);
-      bar.style.width = full ? "100%" : "0%";
-      if(full) setTimeout(()=> bar.style.width="0%", 1000);
-    }
-
     btn.onclick = generateVideo;
 
+    /* ============ CORE FLOW ============ */
     async function generateVideo() {
-      const scriptText = ta.value.trim();
+      const script = ta.value.trim();
       const aspect = document.getElementById("aspect").value;
-      const style = document.getElementById("style").value;
+      const style  = document.getElementById("style").value;
 
-      if (!scriptText) { setStatus("⚠️ ದಯವಿಟ್ಟು ಸ್ಕ್ರಿಪ್ಟ್ ನಮೂದಿಸಿ!", true); ta.focus(); return; }
+      if (!script) { setStatus("⚠️ ದಯವಿಟ್ಟು ಸ್ಕ್ರಿಪ್ಟ್ ನಮೂದಿಸಿ!", "err"); ta.focus(); return; }
+      localStorage.setItem("last-script", script);
 
-      // persist
-      localStorage.setItem("last-script", scriptText);
-
+      // Reset UI
       lockUI(true);
       setStatus(`Generating <span class="dots"><span></span><span></span><span></span></span>`);
-      videoEl.src = ""; videoEl.style.display = "none"; downloadLink.style.display = "none";
+      videoEl.src=""; videoEl.style.display="none"; downloadLink.style.display="none";
       startProgress();
 
-      // timeout / abort
-      const ctrl = new AbortController();
-      const timeout = setTimeout(()=> ctrl.abort(), 120000); // 120s
-
       try {
-        const res = await fetch(WORKER_URL, {
+        // 1) Kick-off => /generate  (expects { job_id })
+        const kickoff = await fetch(`${WORKER_BASE}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ script: scriptText, aspect, style }),
-          signal: ctrl.signal
+          body: JSON.stringify({ script, aspect, style })
         });
+        if (!kickoff.ok) throw new Error(await safeText(kickoff, "ಸರ್ವರ್ ದೋಷ"));
+        const kj = await kickoff.json();
+        if (!kj.job_id) throw new Error("Job ID ಸಿಗಲಿಲ್ಲ");
 
-        let data = {};
-        const ct = res.headers.get("content-type") || "";
-        if (ct.includes("application/json")) {
-          data = await res.json();
-        } else {
-          // non-JSON response safety
-          data = { error: await res.text() };
-        }
+        // 2) Poll => /status?job_id=… (expects { video_url | error | message })
+        const url = await pollForVideo(kj.job_id, 1500, 180000);
+        stopProgress(true);
+        setStatus("✅ ವೀಡಿಯೋ ಸಿದ್ಧ!", "ok");
 
-        if (!res.ok) throw new Error(data.error || "ಸರ್ವರ್ ದೋಷ");
-
-        if (data.video_url) {
-          setStatus("✅ ವೀಡಿಯೋ ಸಿದ್ಧ!", false, true);
-          videoEl.src = data.video_url; videoEl.style.display = "block";
-          downloadLink.href = data.video_url;
-          downloadLink.setAttribute("download", `ai-video-${Date.now()}.mp4`);
-          downloadLink.style.display = "inline-block";
-          stopProgress(true);
-        } else {
-          throw new Error(data.error || "ವೀಡಿಯೋ URL ಲಭ್ಯವಿಲ್ಲ");
-        }
+        // 3) Show result
+        videoEl.src = url; videoEl.style.display="block";
+        downloadLink.href = url;
+        downloadLink.setAttribute("download", `ai-video-${Date.now()}.mp4`);
+        downloadLink.style.display = "inline-block";
 
       } catch (err) {
-        stopProgress(false);
-        setStatus("❌ " + (err.name === "AbortError" ? "Timeout ಆಯಿತು, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ." : (err.message || "ದೋಷ")), true);
         console.error(err);
+        stopProgress(false);
+        setStatus("❌ " + (err.message || "ಏನೋ ದೋಷವಾಯಿತು, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."), "err");
       } finally {
-        clearTimeout(timeout);
         lockUI(false);
       }
     }
 
-    function setStatus(msg, isErr=false, ok=false){
-      statusEl.className = "status" + (isErr ? " err" : ok ? " ok" : "");
-      statusEl.innerHTML = msg;
+    async function pollForVideo(jobId, step=1500, max=180000) {
+      const t0 = Date.now();
+      while (Date.now() - t0 < max) {
+        const r = await fetch(`${WORKER_BASE}/status?job_id=${encodeURIComponent(jobId)}`);
+        if (!r.ok) throw new Error(await safeText(r, "Status check failed"));
+        const j = await r.json();
+
+        if (j.message) setStatus(j.message);
+        if (j.error) throw new Error(j.error);
+        if (j.video_url) return j.video_url;
+
+        await sleep(step);
+      }
+      throw new Error("Timeout ಆಯಿತು, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.");
     }
-    function lockUI(lock){
-      btn.disabled = lock;
-      btn.innerText = lock ? "ಜನರೇಟ್ ಆಗುತ್ತಿದೆ…" : "✨ Generate Video";
+
+    async function safeText(res, fallback) {
+      try { return await res.text(); } catch { return fallback; }
     }
   </script>
 </body>
